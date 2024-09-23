@@ -1,0 +1,57 @@
+name: Playwright Tests CI
+
+# Trigger the workflow on push and pull request events
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        platform: [web, mobile]
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'  # Ensure compatibility with Playwright
+
+      # Step 3: Install dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # Step 4: Install Playwright Browsers (for both web and mobile testing)
+      - name: Install Playwright Browsers
+        run: npx playwright install
+
+      # Step 5: Run Tests (web platform)
+      - name: Run Web Tests
+        if: matrix.platform == 'web'
+        run: |
+          npx playwright test --project=chromium --reporter=dot
+
+      # Step 6: Run Tests (mobile emulation)
+      - name: Run Mobile Tests
+        if: matrix.platform == 'mobile'
+        run: |
+          npx playwright test --project=mobile --reporter=dot
+
+      # Step 7: Upload Playwright Test Report (if needed)
+      - name: Upload Playwright Test Results
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: playwright-report/
